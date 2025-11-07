@@ -1,15 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { Connection, PublicKey, Transaction, VersionedTransaction, SystemProgram, Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, VersionedTransaction, SystemProgram, Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction, clusterApiUrl } from '@solana/web3.js';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SolanaService {
   private connection: Connection;
   private sender: Keypair;
 
-  constructor() {
-    this.connection = new Connection('https://api.mainnet-beta.solana.com');
-    const secret = JSON.parse(process.env.SENDER_PRIVATE_KEY || "[]");
+  constructor(private configService: ConfigService) {
+    // const secretKey = Uint8Array.from(JSON.parse(process.env.PAYER));
+
+    // const payer = Keypair.fromSecretKey(secretKey);
+
+    // const connection = new Connection(RPC, "confirmed");
+    const rpcUrl = this.configService.get<string>('RPC') || clusterApiUrl("testnet");
+    this.connection = new Connection(rpcUrl,"confirmed");
+    const secret = JSON.parse(this.configService.get<string>('SENDER_PRIVATE_KEY') || "[]");
     this.sender = Keypair.fromSecretKey(Uint8Array.from(secret));
   }
 
