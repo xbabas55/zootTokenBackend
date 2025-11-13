@@ -9,7 +9,8 @@ import {
     Keypair,
     LAMPORTS_PER_SOL,
     sendAndConfirmTransaction,
-    clusterApiUrl
+    clusterApiUrl,
+    Message
 } from '@solana/web3.js';
 
 import {
@@ -26,16 +27,18 @@ import { ConfigService } from '@nestjs/config';
 import { Program, BN } from "@coral-xyz/anchor";
 import * as anchor from "@coral-xyz/anchor";
 import type { Zoot } from "../../target/types/zoot";
+import idl from "../../target/idl/zoot.json";
 import { ResponseHelper } from 'library/helper/response';
 import { error } from 'console';
 import { RedisConfigService } from 'library/helper/config-helper';
-import { Config,ConfigDocument } from 'library/helper/model/config-shcema';
+import { Config, ConfigDocument } from 'library/helper/model/config-shcema';
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
 
 
 @Injectable()
 export class ContractService {
     private connection: Connection;
-    private sender: Keypair;
+    private admin: Keypair;
     private program: Program<Zoot>;
     private PROGRAM_ID: PublicKey;
     private TAG: string;
@@ -47,14 +50,23 @@ export class ContractService {
         this.TAG = "ContractService";
         const rpcUrl = this.configService.get<string>('RPC') || clusterApiUrl("testnet");
         this.connection = new Connection(rpcUrl, "confirmed");
-        const secret = JSON.parse(this.configService.get<string>('SENDER_PRIVATE_KEY') || "[]");
-        this.sender = Keypair.fromSecretKey(Uint8Array.from(secret));
-        
-        Logger.log(this.TAG, this.sender.publicKey.toString());
+        const secret = JSON.parse(this.configService.get<string>('PRIVATE_KEY') || "[]");
+        this.admin = Keypair.fromSecretKey(Uint8Array.from(secret));
+
+        Logger.log(this.TAG, this.admin.publicKey.toString());
 
         //anchor.setProvider(anchor.AnchorProvider.env());
-        
-        this.program = anchor.workspace.Zoot as Program<Zoot>;
+        const provider = new anchor.AnchorProvider(this.connection, new NodeWallet(this.admin), {
+            commitment: "confirmed"
+        });
+
+        anchor.setProvider(provider);
+
+        this.program = new Program(
+            idl,
+            provider
+        ) as Program<Zoot>;
+
         this.PROGRAM_ID = this.program.programId;
     }
 
@@ -93,9 +105,9 @@ export class ContractService {
             Logger.log(this.TAG, "token created key=" + decimal.toString());
             mint = await createMint(
                 this.connection,
-                this.sender,
-                this.sender.publicKey,
-                this.sender.publicKey,
+                this.admin,
+                this.admin.publicKey,
+                this.admin.publicKey,
                 decimal,
                 Keypair.generate(),
                 { commitment: "confirmed" }
@@ -105,9 +117,9 @@ export class ContractService {
             adminAta = (
                 await getOrCreateAssociatedTokenAccount(
                     this.connection,
-                    this.sender,
+                    this.admin,
                     mint,
-                    this.sender.publicKey,
+                    this.admin.publicKey,
                     false,
                     "confirmed",
                     { commitment: "confirmed" }
@@ -118,10 +130,10 @@ export class ContractService {
 
             await mintTo(
                 this.connection,
-                this.sender,
+                this.admin,
                 mint,
                 adminAta,
-                this.sender.publicKey,
+                this.admin.publicKey,
                 BigInt(1_000_000_000_000) * BigInt(1_000_000_000),
                 [],
                 { commitment: "confirmed" },
@@ -131,17 +143,17 @@ export class ContractService {
 
             Logger.log(this.TAG, "token balance is " + tokenBalance.toString());
 
-            await this.presaleConfig.set("tokenMint",{
+            await this.presaleConfig.set("tokenMint", {
                 key: "tokenMint",
                 value: mint.toString()
             });
 
-            await this.presaleConfig.set("admin_ata",{
+            await this.presaleConfig.set("admin_ata", {
                 key: "admin_ata",
                 value: adminAta.toString()
             });
 
-            
+
 
 
             return this.response.success(200,
@@ -159,7 +171,6 @@ export class ContractService {
     async presaleInit() {
         try {
             let presalePDA = await this.getPresalePDA();
-            Logger.log(this.TAG, "presale address is " + presalePDA);
 
             const softCapAmount: number = Number((await this.presaleConfig.getByKey("softCap"))?.value ?? 0);
             const hardCapAmount: number = Number((await this.presaleConfig.getByKey("hardCap"))?.value ?? 0);
@@ -172,7 +183,6 @@ export class ContractService {
 
             const config = await this.presaleConfig.getByKey("tokenMint");
             const mint = new PublicKey(config?.value ?? PublicKey.default.toBase58());
-            Logger.log(this.TAG, "presale step " + mint);
 
             const tx = await this.program.methods
                 .createPresale(
@@ -186,24 +196,23 @@ export class ContractService {
                 )
                 .accounts({
                     tokenMint: mint,
-                    authority: this.sender.publicKey,
+                    authority: this.admin.publicKey,
                 })
-                .signers([this.sender])
                 .transaction();
 
-            tx.feePayer = this.sender.publicKey;
+            tx.feePayer = this.admin.publicKey;
             tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-            Logger.log(this.TAG, "presale step " + 2);
-            // transcation confirmation stage
-            Logger.log(this.TAG, await this.connection.simulateTransaction(tx));
-            const signature = await sendAndConfirmTransaction(this.connection, tx, [this.sender]);
+
+            // Logger.log(this.TAG, await this.connection.simulateTransaction(tx));
+            const signature = await sendAndConfirmTransaction(this.connection, tx, [this.admin]);
+
             Logger.log(this.TAG, "Transaction success + " + signature.toString());
             this.response.success(200, "create mint", {
 
             });
         }
         catch (err) {
-            Logger.error(this.TAG,err)
+            Logger.error(this.TAG, err)
             this.response.fail(100, "fail success", err);
         }
     }
@@ -213,67 +222,186 @@ export class ContractService {
             let presalePDA = await this.getPresalePDA();
             let presaleValut = await this.getVaultPDA();
             const mintconfig = await this.presaleConfig.getByKey("tokenMint");
-            console.log("1111" , mintconfig?.value);
+
             const mint = new PublicKey(mintconfig?.value ?? PublicKey.default.toBase58());
 
             const toAssociatedTokenAccount = await getAssociatedTokenAddress(mint, presalePDA, true);
 
-            console.log("1111" , toAssociatedTokenAccount.toString());
-            
             let config = await this.presaleConfig.getByKey("presaleAmount");
             const presaleAmount = Number(config?.value ?? 0);
+
+
+
+            // const configs: ConfigDocument = {
+            //     key: 'softCap',
+            //     value: '20000000000',
+            // } as ConfigDocument;
+            // await this.presaleConfig.set("presaleAmount", configs);
+
+            Logger.verbose(this.TAG, "preslaeAmount " + presaleAmount);
             config = await this.presaleConfig.getByKey("rewardAmount");
 
-            const presaleAta = getAssociatedTokenAddressSync(mint, presalePDA, true);
-
-// admin's ATA (authority = wallet)
-            const adminAta = getAssociatedTokenAddressSync(mint, this.sender.publicKey);
-            console.log("admin wallet for deposit ", this.sender.publicKey.toBase58())
             // preparing transaction
             const tx = await this.program.methods
                 .depositToken(new BN(presaleAmount))
                 .accounts({
-                    admin: this.sender.publicKey,
+                    admin: this.admin.publicKey,
                 })
-                // .signers([this.sender])
-                .instruction();
-                console.log(tx);
+                .transaction();
 
-            // tx.feePayer = this.sender.publicKey;
-            // tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+            tx.feePayer = this.admin.publicKey;
+            tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
 
-            // console.log(await this.connection.simulateTransaction(tx));
+            console.log(await this.connection.simulateTransaction(tx));
 
-            // const signature = await sendAndConfirmTransaction(this.connection, tx, [this.sender]);
-            // console.log(
-            //     `Transaction succcess: \n https://solscan.io/tx/${signature}?cluster=localnet`
-            // );
-            // console.log("Token mint address: ", mint.toBase58());
-            // console.log(
-            //     "Token balance of presaleAta: ",
-            //     await this.connection.getTokenAccountBalance(toAssociatedTokenAccount)
-            // );
-            // console.log(
-            //     "Sol balance of presale vault: ",
-            //     await this.connection.getBalance(presaleValut)
-            // );
+            const signature = await sendAndConfirmTransaction(this.connection, tx, [this.admin]);
+            console.log(
+                `Transaction succcess: \n https://solscan.io/tx/${signature}?cluster=localnet`
+            );
+
+            console.log(
+                "Token balance of presaleAta: ",
+                await this.connection.getTokenAccountBalance(toAssociatedTokenAccount)
+            );
+            console.log(
+                "Sol balance of presale vault: ",
+                await this.connection.getBalance(presaleValut)
+            );
         } catch (err) {
             Logger.error(this.TAG, err);
         }
-
-
     }
 
-    async showAll(){
-          const mintconfig = await this.presaleConfig.getByKey("tokenMint");
-           let config = await this.presaleConfig.getByKey("presaleAmount");
-           return this.response.success(200,"1111",
+    async showAll() {
+        const mintconfig = await this.presaleConfig.getByKey("tokenMint");
+        let config = await this.presaleConfig.getByKey("presaleAmount");
+        return this.response.success(200, "1111",
             {
-                mint:mintconfig,
+                mint: mintconfig,
                 config: config
             }
-           );
+        );
     }
+
+    async presaleStart() {
+        let presaleDuration = new BN(await this.configService.get("presaleDuration")?.value ?? 60 * 60 * 24 * 100);
+        let startTime = new BN(Date.now());
+        let endTime = startTime.add(presaleDuration);
+
+        // preparing transaction
+        const tx = await this.program.methods
+            .startPresale(startTime, endTime)
+            .accounts({
+                authority: this.admin.publicKey,
+            })
+            .transaction();
+
+        tx.feePayer = this.admin.publicKey;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        const signature = await sendAndConfirmTransaction(this.connection, tx, [this.admin]);
+
+        console.log(
+            `Transaction success: \n https://solscan.io/tx/${signature}?cluster=localnet`
+        );
+        console.log(
+            "Start time: ",
+            new Date(parseInt(startTime.toString())),
+            "----",
+            startTime.toNumber()
+        );
+        console.log(
+            "End time: ",
+            new Date(parseInt(endTime.toString())),
+            "----",
+            endTime.toNumber()
+        );
+    }
+
+    async getTokenMint() {
+        return await this.presaleConfig.getByKey("tokenMint");
+        // try {
+        //     const token = await this.configService.get("tokenMint")?.value;
+        //     return this.response.fail(100,this.TAG,token);
+        // } catch (err) {
+        //     Logger.error(this.TAG, err);
+        //     return this.response.fail(100,this.TAG,err)
+        // }
+
+    }
+
+    async updateLimit() {
+
+        // preparing transaction
+        const tx = await this.program.methods
+            .initDayLimit(new BN(100 * LAMPORTS_PER_SOL))
+            .accounts({
+                authority: this.admin.publicKey
+            })
+            .transaction();
+
+        tx.feePayer = this.admin.publicKey;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        console.log(await this.connection.simulateTransaction(tx));
+
+        const signature = await sendAndConfirmTransaction(this.connection, tx, [
+            this.admin,
+        ]);
+        console.log(
+            `Transaction success: \n https://solscan.io/tx/${signature}?cluster=localnet`
+        );
+    }
+
+    async updateUserLimit() {
+
+        // preparing transaction
+        const tx = await this.program.methods
+            .initUserLimit(new BN(100 * LAMPORTS_PER_SOL))
+            .accounts({
+                authority: this.admin.publicKey
+            })
+            .transaction();
+
+        tx.feePayer = this.admin.publicKey;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        console.log(await this.connection.simulateTransaction(tx));
+
+        const signature = await sendAndConfirmTransaction(this.connection, tx, [
+            this.admin,
+        ]);
+        console.log(
+            `Transaction success: \n https://solscan.io/tx/${signature}?cluster=localnet`
+        );
+    }
+
+    async updateCapLimit() {
+        const tx = await this.program.methods
+            .initHardLimit(new BN(1000 * LAMPORTS_PER_SOL))
+            .accounts({
+                authority: this.admin.publicKey
+            })
+            .transaction();
+
+        tx.feePayer = this.admin.publicKey;
+        tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+
+        console.log(await this.connection.simulateTransaction(tx));
+
+        const signature = await sendAndConfirmTransaction(this.connection, tx, [
+            this.admin,
+        ]);
+        console.log(
+            `Transaction success: \n https://solscan.io/tx/${signature}?cluster=localnet`
+        );
+    }
+
+    async getPresaleState() {
+        const presaleInfo = await this.program.account.presaleInfo.fetch(await this.getPresalePDA());
+        console.log("⏰ Remaining time:", presaleInfo);
+    }
+
 
 
 }

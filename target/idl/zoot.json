@@ -1288,6 +1288,256 @@
       "args": []
     },
     {
+      "name": "get_presale_state",
+      "discriminator": [
+        162,
+        66,
+        219,
+        114,
+        27,
+        169,
+        181,
+        174
+      ],
+      "accounts": [
+        {
+          "name": "presale_info",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_day_limit",
+      "discriminator": [
+        121,
+        26,
+        105,
+        73,
+        38,
+        20,
+        177,
+        228
+      ],
+      "accounts": [
+        {
+          "name": "presale_info",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_hard_limit",
+      "discriminator": [
+        150,
+        27,
+        51,
+        35,
+        146,
+        60,
+        97,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "presale_info",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_soft_limit",
+      "discriminator": [
+        7,
+        234,
+        42,
+        167,
+        94,
+        182,
+        20,
+        139
+      ],
+      "accounts": [
+        {
+          "name": "presale_info",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_user_limit",
+      "discriminator": [
+        149,
+        61,
+        223,
+        131,
+        186,
+        150,
+        172,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "presale_info",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "refer",
       "discriminator": [
         209,
@@ -1816,6 +2066,34 @@
       ]
     }
   ],
+  "events": [
+    {
+      "name": "SaleEvent",
+      "discriminator": [
+        157,
+        252,
+        47,
+        101,
+        28,
+        49,
+        225,
+        223
+      ]
+    },
+    {
+      "name": "StateEvent",
+      "discriminator": [
+        229,
+        2,
+        127,
+        126,
+        252,
+        178,
+        240,
+        214
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -2031,6 +2309,54 @@
           },
           {
             "name": "total_third_reward",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SaleEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "staked_sol",
+            "type": "u64"
+          },
+          {
+            "name": "total_token",
+            "type": "u64"
+          },
+          {
+            "name": "cur_sel",
+            "type": "u64"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StateEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "staked_sol",
+            "type": "u64"
+          },
+          {
+            "name": "total_token",
+            "type": "u64"
+          },
+          {
+            "name": "left_time",
             "type": "u64"
           }
         ]

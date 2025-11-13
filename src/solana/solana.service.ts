@@ -16,7 +16,7 @@ export class SolanaService {
     // const connection = new Connection(RPC, "confirmed");
     const rpcUrl = this.configService.get<string>('RPC') || clusterApiUrl("testnet");
     this.connection = new Connection(rpcUrl,"confirmed");
-    const secret = JSON.parse(this.configService.get<string>('SENDER_PRIVATE_KEY') || "[]");
+    const secret = JSON.parse(this.configService.get<string>('PRIVATE_KEY') || "[]");
     this.sender = Keypair.fromSecretKey(Uint8Array.from(secret));
   }
 

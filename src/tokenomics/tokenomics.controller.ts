@@ -2,6 +2,7 @@ import { Controller, Get, Query, Post, Body, Logger } from '@nestjs/common';
 import { SolanaService } from '../solana/solana.service';
 import { Console } from 'console';
 import { ContractService } from 'src/contract/contract.service';
+import { ConfigDocument } from 'library/helper/model/config-shcema';
 
 @Controller('presale')
 export class TokenomicsController {
@@ -57,6 +58,28 @@ export class TokenomicsController {
     @Post('showAll')
     async showAll(){
         return await this.contractService.showAll();
+    }
+
+    @Post('startPresale')
+    async startPresale(){
+        return await this.contractService.presaleStart();
+    }
+
+    @Get('getTokenMint')
+    async getTokenMint(){
+        return  await this.contractService.getTokenMint();
+    }
+
+    @Post('initLimt')
+    async initLimit(){
+        await this.contractService.updateLimit();
+        await this.contractService.updateCapLimit();
+        return await this.contractService.updateUserLimit();
+    }
+
+    @Get("presalestate")
+    async getPresaleState(){
+        return await this.contractService.getPresaleState();
     }
 
 }

@@ -1294,6 +1294,256 @@ export type Zoot = {
       "args": []
     },
     {
+      "name": "getPresaleState",
+      "discriminator": [
+        162,
+        66,
+        219,
+        114,
+        27,
+        169,
+        181,
+        174
+      ],
+      "accounts": [
+        {
+          "name": "presaleInfo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initDayLimit",
+      "discriminator": [
+        121,
+        26,
+        105,
+        73,
+        38,
+        20,
+        177,
+        228
+      ],
+      "accounts": [
+        {
+          "name": "presaleInfo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initHardLimit",
+      "discriminator": [
+        150,
+        27,
+        51,
+        35,
+        146,
+        60,
+        97,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "presaleInfo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initSoftLimit",
+      "discriminator": [
+        7,
+        234,
+        42,
+        167,
+        94,
+        182,
+        20,
+        139
+      ],
+      "accounts": [
+        {
+          "name": "presaleInfo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initUserLimit",
+      "discriminator": [
+        149,
+        61,
+        223,
+        131,
+        186,
+        150,
+        172,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "presaleInfo",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  80,
+                  82,
+                  69,
+                  83,
+                  65,
+                  76,
+                  69,
+                  95,
+                  83,
+                  69,
+                  69,
+                  68
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "limit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "refer",
       "discriminator": [
         209,
@@ -1822,6 +2072,34 @@ export type Zoot = {
       ]
     }
   ],
+  "events": [
+    {
+      "name": "saleEvent",
+      "discriminator": [
+        157,
+        252,
+        47,
+        101,
+        28,
+        49,
+        225,
+        223
+      ]
+    },
+    {
+      "name": "stateEvent",
+      "discriminator": [
+        229,
+        2,
+        127,
+        126,
+        252,
+        178,
+        240,
+        214
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -2037,6 +2315,54 @@ export type Zoot = {
           },
           {
             "name": "totalThirdReward",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "saleEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stakedSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalToken",
+            "type": "u64"
+          },
+          {
+            "name": "curSel",
+            "type": "u64"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "stateEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stakedSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalToken",
+            "type": "u64"
+          },
+          {
+            "name": "leftTime",
             "type": "u64"
           }
         ]
