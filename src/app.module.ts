@@ -12,6 +12,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 
 import { RConfigModule } from 'library/helper/config-helper.module';
 import { RedisModule } from 'library/database/redius.module';
+import { TokenModule } from './token/token.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
    imports: [
@@ -23,6 +25,8 @@ import { RedisModule } from 'library/database/redius.module';
     MongooseModule.forRoot('mongodb://localhost:27017'),
     RedisModule,
     RConfigModule,
+    TokenModule,
+    WalletModule,
   ],
   controllers: [AppController, GalleryController, TokenomicsController],
   providers: [AppService, SolanaService, ContractService],

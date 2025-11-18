@@ -54,6 +54,9 @@ export class ContractService {
         this.admin = Keypair.fromSecretKey(Uint8Array.from(secret));
 
         Logger.log(this.TAG, this.admin.publicKey.toString());
+        // const config = await this.presaleConfig.getByKey("tokenMint");
+        // const mint = new PublicKey(config?.value ?? PublicKey.default.toBase58());
+        Logger.log(this.TAG, this.admin.publicKey.toString());
 
         //anchor.setProvider(anchor.AnchorProvider.env());
         const provider = new anchor.AnchorProvider(this.connection, new NodeWallet(this.admin), {
@@ -69,6 +72,7 @@ export class ContractService {
 
         this.PROGRAM_ID = this.program.programId;
     }
+    
 
     async getUserInfoPDA(user: PublicKey) {
         const userSeed = this.configService.get<string>('USER_SEED') || 'USER_SEED';
@@ -392,6 +396,7 @@ export class ContractService {
         const signature = await sendAndConfirmTransaction(this.connection, tx, [
             this.admin,
         ]);
+        
         console.log(
             `Transaction success: \n https://solscan.io/tx/${signature}?cluster=localnet`
         );

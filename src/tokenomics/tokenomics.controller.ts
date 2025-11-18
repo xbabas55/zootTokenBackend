@@ -7,11 +7,11 @@ import { ConfigDocument } from 'library/helper/model/config-shcema';
 @Controller('presale')
 export class TokenomicsController {
 
-    private TAG : string;
+    private TAG: string;
     constructor(
-        private readonly solanaService: SolanaService, 
-        private readonly contractService: ContractService) { 
-        this.TAG="tokenomics";
+        private readonly solanaService: SolanaService,
+        private readonly contractService: ContractService) {
+        this.TAG = "tokenomics";
     }
 
     @Get()
@@ -35,50 +35,50 @@ export class TokenomicsController {
 
 
     @Post('buyZoot')
-    async buyZoot(@Body() body: { sol : number, pubkey : string }){
+    async buyZoot(@Body() body: { sol: number, pubkey: string }) {
         Logger.log(this.TAG, "buy Zoot");
         return { success: true };
     }
 
     @Post('createMint')
-    async CreateMint(){
-       return  await this.contractService.createmint();
+    async CreateMint() {
+        return await this.contractService.createmint();
     }
 
     @Post('initPresale')
-    async initPresale(){
-       return  await this.contractService.presaleInit();
+    async initPresale() {
+        return await this.contractService.presaleInit();
     }
 
     @Post('depositToken')
-    async depositToken(){
-       return  await this.contractService.depositToken();
+    async depositToken() {
+        return await this.contractService.depositToken();
     }
 
     @Post('showAll')
-    async showAll(){
+    async showAll() {
         return await this.contractService.showAll();
     }
 
     @Post('startPresale')
-    async startPresale(){
+    async startPresale() {
         return await this.contractService.presaleStart();
     }
 
     @Get('getTokenMint')
-    async getTokenMint(){
-        return  await this.contractService.getTokenMint();
+    async getTokenMint() {
+        return await this.contractService.getTokenMint();
     }
 
     @Post('initLimt')
-    async initLimit(){
+    async initLimit() {
         await this.contractService.updateLimit();
         await this.contractService.updateCapLimit();
         return await this.contractService.updateUserLimit();
     }
 
     @Get("presalestate")
-    async getPresaleState(){
+    async getPresaleState() {
         return await this.contractService.getPresaleState();
     }
 
